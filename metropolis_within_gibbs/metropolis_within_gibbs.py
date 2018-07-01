@@ -97,7 +97,10 @@ class MetropolisWithinGibbs():
         for i in range(Niter):
 
             # F_T
-            F_T = np.random.gamma(N_C + 1, scale_F_T(s, f, eps, w))
+            try:
+                F_T = np.random.gamma(N_C + 1, scale_F_T(s, f, eps, w))
+            except:
+                print(scale_F_T(s, f, eps, w), f, eps)
             chain.F_T.append(F_T)
     
             # lambda
@@ -105,8 +108,11 @@ class MetropolisWithinGibbs():
             for i in range(N_C):
                 p = get_p_lam(f, eps, kappa, kappa_c, d[i], theta[i], varpi, w)
                 sample = np.asarray(np.random.multinomial(1, p))
-                lam.append(np.where(sample == 1)[0][0])
-
+                try:
+                    lam.append(np.where(sample == 1)[0][0])
+                except:
+                    print(p, sample, f, kappa)
+                    
             # f 
             f_new = np.random.normal(f, 0.2)
             while (f_new < 0):

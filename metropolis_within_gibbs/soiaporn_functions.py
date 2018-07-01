@@ -35,7 +35,7 @@ def get_p_lam(f, eps, kappa, kappa_c, d_i, theta_i, varpi, w):
             p_lam_k = 0
         p_lam.append(p_lam_k)
 
-    return p_lam / sum(p_lam)
+    return np.asarray(p_lam) / sum(p_lam)
 
 def prob_lam_i(k, F_T, f, kappa, kappa_c, eps, w, varpi, d):
     if i == 0:
