@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 from .soiaporn_functions import *
 
@@ -31,6 +32,7 @@ class MetropolisWithinGibbs():
         self.input_data = input_data
         self.input_parameters = input_parameters
         self.samples = []
+        self.total_samples = Chain()
         self.rhat = Rhat()
 
         
@@ -53,11 +55,20 @@ class MetropolisWithinGibbs():
 
         # asses convergence
         self.calculate_rhat()
+
+        # accepted fraction
+        accept_count_tot = 0
+        for s in self.samples:
+            accept_count_tot += s.accept_count
+        accept_fraction = accept_count_tot / (self.Niter * self.Nchain)
+        
         print('Sampling completed')
         print('------------------')
-        print('rhat f:', self.rhat.f)
-        print('rhat F_T:', self.rhat.F_T)
-        
+        print('rhat f: %.2f' % self.rhat.f)
+        print('rhat F_T: %.2f' % self.rhat.F_T)
+        print('accepted fraction: %.2f' % accept_fraction)
+        print('')
+        self.get_total_samples()
         
             
     def RunChain(self, Niter, F_T_init, f_init):
@@ -129,7 +140,9 @@ class MetropolisWithinGibbs():
 
         chain.F_T = chain.F_T[self.Nburn :]
         chain.f = chain.f[self.Nburn :]
-        
+
+        return chain
+    
         
     def calculate_rhat(self):
         """
@@ -160,8 +173,37 @@ class MetropolisWithinGibbs():
         self.rhat.f = rscore(f, num_samples)
         self.rhat.F_T = rscore(F_T, num_samples)
         
-        
 
+    def get_total_samples(self):
+        """
+        Merge samples from all chains for easy storage.
+        """
+        for s in self.samples:
+            self.total_samples.f += s.f
+            self.total_samples.F_T += s.F_T
+        
+        
+    def traceplot(self):
+        """
+        Print a stan-style summary traceplot.
+        """
+        num_samples_tot = (self.Niter - self.Nburn) * self.Nchain
+        x = range(num_samples_tot)
+
+        f = []
+        F_T = []
+        for s in self.samples:
+            f += s.f
+            F_T += s.F_T
+        
+        fig, axarr = plt.subplots(2, sharex = True)
+        axarr[0].plot(x, f)
+        axarr[0].set_title('f')
+        axarr[1].plot(x, F_T)
+        axarr[1].set_title('F_T')
+
+
+        
 class InputData():
     """
     Input data to the MetropolisWithinGibbs object.
