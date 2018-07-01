@@ -92,6 +92,9 @@ class MetropolisWithinGibbs():
         kappa = self.input_parameters.kappa
         kappa_c = self.input_parameters.kappa_c
 
+        print('kappa:', kappa)
+        print('eps', eps)
+
         chain = Chain()
         
         for i in range(Niter):
@@ -107,6 +110,7 @@ class MetropolisWithinGibbs():
             lam = []
             for i in range(N_C):
                 p = get_p_lam(f, eps, kappa, kappa_c, d[i], theta[i], varpi, w)
+                # p = get_p_lam_alt(F_T, eps, f, w)
                 sample = np.asarray(np.random.multinomial(1, p))
                 try:
                     lam.append(np.where(sample == 1)[0][0])
@@ -114,9 +118,9 @@ class MetropolisWithinGibbs():
                     print(p, sample, f, kappa)
                     
             # f 
-            f_new = np.random.normal(f, 0.2)
-            while (f_new < 0):
-                f_new = np.random.normal(f, 0.2)
+            f_new = np.random.normal(f, 0.4)
+            while (f_new < 0 or f_new > 1):
+                f_new = np.random.normal(f, 0.4)
             p_f_old = log_p_f(F_T, f, eps, lam, w, N_C, a, b)
             p_f_new = log_p_f(F_T, f_new, eps, lam, w, N_C, a, b)
             if(p_f_new > p_f_old):
