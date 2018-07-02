@@ -85,6 +85,7 @@ class MetropolisWithinGibbs():
         varpi = self.input_data.varpi
         d = self.input_data.d
         theta = self.input_data.theta
+        A = self.input_data.A
         
         a = self.input_parameters.a
         b = self.input_parameters.b
@@ -109,7 +110,7 @@ class MetropolisWithinGibbs():
             # lambda
             lam = []
             for i in range(N_C):
-                p = get_p_lam(f, eps, kappa, kappa_c, d[i], theta[i], varpi, w)
+                p = get_p_lam(f, eps, kappa, kappa_c, d[i], theta[i], A[i], varpi, w)
                 # p = get_p_lam_alt(F_T, eps, f, w)
                 sample = np.asarray(np.random.multinomial(1, p))
                 try:
@@ -219,12 +220,13 @@ class InputData():
     Input data to the MetropolisWithinGibbs object.
     """
 
-    def __init__(self, d, theta, varpi, D, eps):
+    def __init__(self, d, A, theta, varpi, D, eps):
         """
         Input data to the MetropolisWithinGibbs object.
         """
 
         self.d = d
+        self.A = A
         self.theta = theta
         self.varpi = varpi
         self.D = D
