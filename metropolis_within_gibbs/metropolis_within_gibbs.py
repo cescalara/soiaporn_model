@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+from .autocorr import *
 from .soiaporn_functions import *
 
 F_T_MIN = 0.0
@@ -33,6 +34,8 @@ class MetropolisWithinGibbs():
         self.input_parameters = input_parameters
         self.samples = []
         self.total_samples = Chain()
+        self.autocorr = Chain()
+        self.neff = Chain()
         self.rhat = Rhat()
 
         
@@ -69,6 +72,8 @@ class MetropolisWithinGibbs():
         print('accepted fraction: %.2f' % accept_fraction)
         print('')
         self.get_total_samples()
+        self.get_autocorr()
+        self.get_neff()
         
             
     def RunChain(self, Niter, F_T_init, f_init):
@@ -96,6 +101,7 @@ class MetropolisWithinGibbs():
         print('kappa:', kappa)
         print('eps', eps)
 
+        l_iter = 0
         chain = Chain()
         
         for i in range(Niter):
@@ -108,6 +114,7 @@ class MetropolisWithinGibbs():
             chain.F_T.append(F_T)
     
             # lambda
+            lam_check = []
             lam = []
             for i in range(N_C):
                 p = get_p_lam(f, eps, kappa, kappa_c, d[i], theta[i], A[i], varpi, w)
@@ -117,7 +124,16 @@ class MetropolisWithinGibbs():
                     lam.append(np.where(sample == 1)[0][0])
                 except:
                     print(p, sample, f, kappa)
-                    
+
+            lam_check.append(lam)
+            
+            if l_iter == 10:
+                l_iter = 0
+                lam_check = np.mean(lam_check, axis = 0)
+                chain.lam.append(lam_check)
+            else:
+                l_iter += 1
+                
             # f 
             f_new = np.random.normal(f, 0.4)
             while (f_new < 0 or f_new > 1):
@@ -192,6 +208,7 @@ class MetropolisWithinGibbs():
         for s in self.samples:
             self.total_samples.f += s.f
             self.total_samples.F_T += s.F_T
+            self.total_samples.lam += s.lam
         
         
     def traceplot(self):
@@ -207,12 +224,37 @@ class MetropolisWithinGibbs():
             f += s.f
             F_T += s.F_T
         
-        fig, axarr = plt.subplots(2, sharex = True)
+        fig, axarr = plt.subplots(3, sharex = True)
         axarr[0].plot(x, f)
         axarr[0].set_title('f')
         axarr[1].plot(x, F_T)
         axarr[1].set_title('F_T')
+        for l in np.transpose(np.array(self.total_samples.lam)):
+            axarr[2].plot(l)
+        axarr[2].set_title('$\lambda$')
+    
 
+
+    def get_autocorr(self):
+        """
+        Calculate sample autocorrelation.
+        """
+
+        lags = np.arange(1, (self.Niter - self.Nburn) * self.Nchain - 1)
+        self.autocorr.f = sample_corr(self.total_samples.f, lags)
+        self.autocorr.F_T = sample_corr(self.total_samples.F_T, lags)
+        
+
+    def get_neff(self):
+        """
+        Calculate the effective number of samples.
+        """
+
+        self.neff.f = N_eff(self.total_samples.f, self.autocorr.f)
+        self.neff.F_T = N_eff(self.total_samples.F_T, self.autocorr.F_T)
+        
+        
+        
 
         
 class InputData():
@@ -265,6 +307,7 @@ class Chain():
         self.F_T = []
         self.f = []
         self.accept_count = 0
+        self.lam = []
 
 class Rhat():
     """

@@ -29,12 +29,13 @@ def get_p_lam(f, eps, kappa, kappa_c, d_i, theta_i, A_i, varpi, w):
     # k > 0
     for k in range(len(w)):
         f_lam_k = np.exp(log_fik(kappa, kappa_c, d_i, varpi[k], theta_i, A_i))
-        p_lam_k = (f_lam_k) * f * w[k]
+        p_lam_k = (f_lam_k) * f * w[k] 
         if (p_lam_k < 1e-16):
             p_lam_k = 0
         p_lam.append(p_lam_k)
 
     return np.asarray(p_lam) / sum(p_lam)
+
 
 def get_p_lam_alt(F_T, eps, f, w):
     p_lam = []
@@ -53,6 +54,7 @@ def fik(kappa, kappa_c, d_i, varpi, theta_i, A_i):
     inner = np.linalg.norm((kappa_c * d_i) + (kappa * varpi))
     term2 = np.sinh(inner) / inner
     return A_i * np.cos(theta_i) * term1 * term2
+
 
 def log_fik(kappa, kappa_c, d_i, varpi, theta_i, A_i):
 
