@@ -13,25 +13,25 @@ def scale_F_T(s, f, eps, w):
     sum_term = 0
     for k in range(len(eps)):
         sum_term += w[k] * eps[k] 
-    denom = (1 / s) + ((1 - f) * (alpha_T / 4 * np.pi)) + (f * sum_term)
+    denom = (1 / s) + ((1 - f) * (alpha_T / (4 * np.pi))) + (f * sum_term)
     return 1 / denom
 
 def get_p_lam(f, eps, kappa, kappa_c, d_i, theta_i, A_i, varpi, w):
     p_lam = []
 
     # k = 0
-    f_lam_0 = A_i * np.cos(theta_i) * (1 / 4 * np.pi)
+    f_lam_0 = A_i * np.cos(theta_i) / (4 * np.pi)
     p_lam_0 = f_lam_0 * (1 - f)
-    if (p_lam_0 < 1e-16):
-        p_lam_0 = 0
+    #if (p_lam_0 < 1e-16):
+    #    p_lam_0 = 0
     p_lam.append(p_lam_0)
 
     # k > 0
     for k in range(len(w)):
         f_lam_k = np.exp(log_fik(kappa, kappa_c, d_i, varpi[k], theta_i, A_i))
         p_lam_k = (f_lam_k) * f * w[k] 
-        if (p_lam_k < 1e-16):
-            p_lam_k = 0
+        #if (p_lam_k < 1e-16):
+        #    p_lam_k = 0
         p_lam.append(p_lam_k)
 
     return np.asarray(p_lam) / sum(p_lam)
@@ -72,7 +72,7 @@ def p_f(F_T, f, eps, lam, w, N_C, a, b):
     sum_term = 0
     for k in range(len(eps)):
         sum_term += w[k] * eps[k]
-    inner = -F_T * ((1 - f) * (alpha_T / 4 * np.pi) + f * sum_term)
+    inner = -F_T * ((1 - f) * (alpha_T / (4 * np.pi)) + f * sum_term)
     term1 = np.exp(inner)
     m_0 = lam.count(0)
     term2 = (1 - f)**(m_0 + b - 1) * f**(N_C - m_0 + a - 1)
@@ -82,9 +82,9 @@ def log_p_f(F_T, f, eps, lam, w, N_C, a, b):
     sum_term = 0
     for k in range(len(eps)):
         sum_term += w[k] * eps[k]
-    term1 = -F_T * ((1 - f) * (alpha_T / 4 * np.pi) + f * sum_term)
+    term1 = -F_T * ((1 - f) * (alpha_T / (4 * np.pi)) + (f * sum_term))
     m_0 = lam.count(0)
-    term2 = np.log(np.power(1 - f, m_0 + b - 1)) + np.log(np.power(f, N_C - m_0 + a - 1))
+    term2 = (np.log(1 - f) * m_0 + b - 1) + (np.log(f) * N_C - m_0 + a - 1)
     return term1 + term2
 
 def get_weights(D):
