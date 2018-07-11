@@ -221,7 +221,11 @@ class MetropolisWithinGibbs():
         Print a stan-style summary traceplot.
         """
         num_samples_tot = (self.Niter - self.Nburn) * self.Nchain
+
         x = range(num_samples_tot)
+
+        lam = np.transpose(np.array(self.total_samples.lam))
+        x_l = np.linspace(0, num_samples_tot, len(lam[0]))
 
         f = []
         F_T = []
@@ -234,10 +238,9 @@ class MetropolisWithinGibbs():
         axarr[0].set_title('f')
         axarr[1].plot(x, F_T)
         axarr[1].set_title('F_T')
-        for l in np.transpose(np.array(self.total_samples.lam)):
-            axarr[2].plot(l)
+        for l in lam:
+            axarr[2].plot(x_l, l)
         axarr[2].set_title('$\lambda$')
-    
 
 
     def get_autocorr(self):
