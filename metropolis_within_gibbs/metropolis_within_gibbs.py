@@ -69,6 +69,7 @@ class MetropolisWithinGibbs():
         print('------------------')
         print('rhat f: %.2f' % self.rhat.f)
         print('rhat F_T: %.2f' % self.rhat.F_T)
+        print('rhat lambda (avg): %.2f' % np.mean(self.rhat.lam))
         print('accepted fraction: %.2f' % accept_fraction)
         print('')
         self.get_total_samples()
@@ -173,6 +174,8 @@ class MetropolisWithinGibbs():
         chain.F_T = chain.F_T[self.Nburn :]
         chain.f = chain.f[self.Nburn :]
 
+        chain.lam
+
         return chain
     
         
@@ -181,14 +184,21 @@ class MetropolisWithinGibbs():
         calculate rhat
         """
         num_samples = self.Niter - self.Nburn
-        
+
         f = np.zeros((self.Nchain, num_samples))
         F_T = np.zeros((self.Nchain, num_samples))
+
+        num_samples_lam = len(self.samples[0].lam)
+        ll = np.zeros((self.Nchain, num_samples_lam))
+        lam = []
         
         for i in range(self.Nchain):
             f[i] = self.samples[i].f
             F_T[i] = self.samples[i].F_T
-
+            for j in range(self.input_data.N_C):
+                ll[i] = np.transpose(self.samples[i].lam)[j]
+                lam.append(ll)
+                
         def rscore(var, num_samples):
             
             # between chain variance
@@ -204,7 +214,9 @@ class MetropolisWithinGibbs():
 
         self.rhat.f = rscore(f, num_samples)
         self.rhat.F_T = rscore(F_T, num_samples)
-        
+        for l in lam:
+            self.rhat.lam.append(rscore(l, num_samples_lam))
+            
 
     def get_total_samples(self):
         """
@@ -233,7 +245,7 @@ class MetropolisWithinGibbs():
             f += s.f
             F_T += s.F_T
         
-        fig, axarr = plt.subplots(3, sharex = True)
+        fig, axarr = plt.subplots(3, sharex = True, figsize = (20, 16))
         axarr[0].plot(x, f)
         axarr[0].set_title('f')
         axarr[1].plot(x, F_T)
@@ -251,6 +263,8 @@ class MetropolisWithinGibbs():
         lags = np.arange(1, (self.Niter - self.Nburn) * self.Nchain - 1)
         self.autocorr.f = sample_corr(self.total_samples.f, lags)
         self.autocorr.F_T = sample_corr(self.total_samples.F_T, lags)
+        for l in np.transpose(self.total_samples.lam):
+            self.autocorr.lam.append(sample_corr(l, lags))
         
 
     def get_neff(self):
@@ -260,8 +274,10 @@ class MetropolisWithinGibbs():
 
         self.neff.f = N_eff(self.total_samples.f, self.autocorr.f)
         self.neff.F_T = N_eff(self.total_samples.F_T, self.autocorr.F_T)
-        
-        
+        i = 0
+        for l in np.transpose(self.total_samples.lam):
+            self.neff.lam.append(N_eff(l, self.autocorr.lam[i]))
+            i += 1
         
 
         
@@ -329,3 +345,4 @@ class Rhat():
 
         self.f = None
         self.F_T = None
+        self.lam = []
